@@ -34,7 +34,7 @@ main :: proc() {
         for num_2 in numbers {
             for num_3 in numbers {
                 if num_1 + num_2 + num_3 == 2020 {
-                    fmt.println(num_1, num_2, num_3, num_1 * num_2 * num_3)
+                    fmt.println(num_1 * num_2 * num_3)
                     break loop_3
                 }
             }
