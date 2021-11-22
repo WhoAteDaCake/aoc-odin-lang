@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-odin build days/$1/code.odin -collection:shared=./shared
+odin build days/$1/code.odin -collection:shared=shared
 #
 ./code
