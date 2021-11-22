@@ -39,11 +39,12 @@ read :: proc(file: string) -> ([]u8, Error) {
     return data, .None
 }   
 
-lines :: proc(file: string) -> ([]string, Error) {
+lines :: proc(file: string) -> (string, []string, Error) {
     raw, err := read(file)
+    text: string
     if err != nil {
-        return nil, err
+        return text, nil, err
     }
-    text := string(raw)
-    return strings.split(text, "\n"), .None
+    text = string(raw)
+    return text, strings.split(text, "\n"), .None
 }

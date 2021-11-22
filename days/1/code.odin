@@ -7,11 +7,12 @@ import "core:strconv"
 import "shared:file"   
 
 main :: proc() {
-    lines, err := file.lines("./days/1/input.txt")
+    raw, lines, err := file.lines("./days/1/input.txt")
     if err != nil {
         fmt.println("Failed")
         return
     }
+    defer delete(raw)
     defer delete(lines)
 
     numbers := make([]u64, len(lines))
