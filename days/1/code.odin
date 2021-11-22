@@ -7,7 +7,7 @@ import "core:strconv"
 import "shared:file"   
 
 main :: proc() {
-    raw, err := file.read_file("./days/1/input.txt")
+    raw, err := file.read("./days/1/input.txt")
     if err != nil {
         fmt.println("Failed")
     }
@@ -35,6 +35,9 @@ main :: proc() {
 
     loop_3: for num_1 in numbers {
         for num_2 in numbers {
+            if num_1 + num_2 > 2020 {
+                continue 
+            }
             for num_3 in numbers {
                 if num_1 + num_2 + num_3 == 2020 {
                     fmt.println(num_1 * num_2 * num_3)

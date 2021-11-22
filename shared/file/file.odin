@@ -12,7 +12,7 @@ Error :: enum {
     Read,
 }
 
-read_file :: proc(file: string) -> ([]u8, Error) {
+read :: proc(file: string) -> ([]u8, Error) {
     f, err_no := os.open(file)
     if err_no != 0 {
         return nil, .Open
