@@ -40,7 +40,7 @@ read_file :: proc(file: string) -> ([]u8, Error) {
 }   
 
 main :: proc() {
-    raw, err := read_file("./input.txt")
+    raw, err := read_file("./days/1/input.txt")
     if err != nil {
         fmt.println("Failed")
     }
