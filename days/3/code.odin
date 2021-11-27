@@ -22,13 +22,11 @@ import "shared:file"
 //     return (l1 == row.letter && l2 != row.letter) || (l1 != row.letter && l2 == row.letter)
 // }
 
-task_1:: proc(lines: []string) -> int {
+task:: proc(lines: []string, step_x: int, step_y: int) -> int {
     width := len(lines[0])
     height := len(lines)
     x := 0
     y := 0
-    step_x := 3
-    step_y := 1
     tree_n := 0
 
     for y < height - 1 {
@@ -53,7 +51,10 @@ main :: proc() {
     defer delete(lines)
     defer delete(raw)
 
-    result_1 := task_1(lines)
-
-    fmt.println(result_1)
+    r1 := task(lines, 1, 1)
+    r2 := task(lines, 3, 1)
+    r3 := task(lines, 5, 1)
+    r4 := task(lines, 7, 1)
+    r5 := task(lines, 1, 2)
+    fmt.println(r2, r1 * r2 * r3 * r4 * r5)
 }
