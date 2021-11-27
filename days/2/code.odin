@@ -27,7 +27,7 @@ parse :: proc(row: string) -> Row {
     return Row{min,max,letter,password}
 }
 
-is_valid :: proc(row: Row) -> bool {
+is_valid_v1 :: proc(row: Row) -> bool {
     valid := 0
     for char in row.password {
         if char == row.letter {
@@ -35,6 +35,12 @@ is_valid :: proc(row: Row) -> bool {
         }
     }
     return valid >= row.min && valid <= row.max 
+}
+
+is_valid_v2 :: proc(row: Row) -> bool {
+    l1 := rune(row.password[row.min - 1])
+    l2 := rune(row.password[row.max - 1])
+    return (l1 == row.letter && l2 != row.letter) || (l1 != row.letter && l2 == row.letter)
 }
 
 main :: proc() {
@@ -46,15 +52,19 @@ main :: proc() {
     defer delete(lines)
     defer delete(raw)
     
-    count := 0
+    valid_n1 := 0
+    valid_n2 := 0 
+
     for line, idx in lines {
         row := parse(line)
-        valid := is_valid(row)
-        if valid {
-            count += 1
+        if is_valid_v1(row) {
+            valid_n1 += 1
+        }
+        if is_valid_v2(row) {
+            valid_n2 += 1
         }
     }
-    fmt.println(count)
+    fmt.println(valid_n1, valid_n2)
 }
 
 
