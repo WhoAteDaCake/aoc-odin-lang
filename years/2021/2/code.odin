@@ -14,13 +14,20 @@ Vector2 :: struct {
 	y: int,
 }
 
+PositionWithAim :: struct {
+	x: int,
+	y: int,
+    aim: int,
+}
+
 Action :: struct {
 	command: string,
     steps: int,
-}
+ }
 
 parse_action :: proc(row: string) -> Action {
     parts := strings.split(row, " ")
+    defer delete(parts)
 
     num, _ := strconv.parse_int(parts[1])    
     return Action{parts[0], num}
@@ -42,23 +49,28 @@ task_1 :: proc(rows: []string) {
     fmt.println(pos.x * pos.y)
 }
 
+task_2 :: proc(rows: []string) {
+    pos := PositionWithAim{0, 0, 0}
+    for row in rows {
+        action := parse_action(row)
+        steps := action.steps
+        switch action.command {
+        case "forward":
+            pos.x += steps
+            pos.y += pos.aim * steps
+        case "down":
+            // pos.y += steps
+            pos.aim += steps
+        case "up":
+            // pos.y -= steps
+            pos.aim -= steps    
+        }
+        // fmt.println(pos)
+    }
+    fmt.println(pos.x * pos.y)
+}
 
-// task_2 :: proc(values: []int) {
-//     window_size := 3
-//     larger := 0
-//     prev := math.sum(values[0:window_size])
-//     for i := 1; i < len(values) && i + window_size <= len(values); i += 1 {
-//         acc := math.sum(values[i:i + window_size])
-//         if acc > prev {
-//             larger += 1
-//         }
-//         prev = acc
-//     }
-//     fmt.println(larger)
-// }
-
-
-main :: proc() {
+main_ :: proc() {
     input := string(#load("input.txt"))
     defer delete(input)
 
@@ -66,5 +78,22 @@ main :: proc() {
     defer delete(rows)
 
     task_1(rows)
-    // task_2(values)
+    task_2(rows)
+}
+
+main :: proc() {
+    using fmt
+
+    track: mem.Tracking_Allocator
+    mem.tracking_allocator_init(&track, context.allocator)
+    context.allocator = mem.tracking_allocator(&track)
+
+    main_()
+
+    if len(track.allocation_map) > 0 {
+        println()
+        for _, v in track.allocation_map {
+            printf("%v Leaked %v bytes\n", v.location, v.size)
+        }
+    }
 }

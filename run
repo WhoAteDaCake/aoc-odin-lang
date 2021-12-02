@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 set -e
-odin run years/2021/$1/code.odin -collection:shared=shared
+odin build years/2021/$1/code.odin -debug -collection:shared=shared
+
+./code
