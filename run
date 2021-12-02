@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -e
-odin build days/$1/code.odin -collection:shared=shared
+odin build years/2021/$1/code.odin -collection:shared=shared
 #
 ./code
