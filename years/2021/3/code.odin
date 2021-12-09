@@ -9,14 +9,7 @@ import "core:path"
 import "shared:file"
 import "core:math"
 
-
-main_ :: proc() {
-    input := string(#load("input.txt"))
-    defer delete(input)
-
-    rows := strings.split(input, "\n")
-    defer delete(rows)
-
+task_1::proc(rows: []string) {
     gama := make([]u8, len(rows[0]))
     defer delete(gama)
     epsilon := make([]u8, len(rows[0]))
@@ -49,6 +42,75 @@ main_ :: proc() {
     gama_n,  _  := strconv.parse_int(string(gama), 2);
     ep_n, _  := strconv.parse_int(string(epsilon), 2);
     fmt.println(gama_n * ep_n)
+}
+
+oxygen :: proc(one_count: int, zero_count: int) -> u8 {
+    if zero_count > one_count {
+        return '0'
+    }
+    return '1'
+}
+
+scrubber :: proc(one_count: int, zero_count: int) -> u8 {
+    if one_count < zero_count {
+        return '1'
+    }
+    return '0'
+}
+
+select_number :: proc(rows: [dynamic]string, idx: int, selector: proc(int, int) -> u8) -> int {
+    zero_count := 0
+    one_count := 0
+
+    for row in rows {
+        if row[idx] == '0' {
+            zero_count += 1
+        } else {
+            one_count += 1
+        }
+    }
+    selected: [dynamic]string
+    defer delete(selected)
+    symbol := selector(one_count, zero_count)
+
+    for row in rows {
+        if row[idx] == symbol {
+            append(&selected, row)
+        }
+    }
+
+    if len(selected) == 1 {
+        dec,  _  := strconv.parse_int(selected[0], 2);
+        return dec
+    } else if len(selected) == 0 {
+        fmt.println("No rows selected")
+        os.exit(1)
+    }
+    return select_number(selected, idx + 1, selector)
+}
+
+task_2 :: proc(rows: []string) {
+    dyn_rows := make([dynamic]string, len(rows))
+    defer delete(dyn_rows)
+
+    for row, idx in rows {
+        dyn_rows[idx] = row
+    }
+
+    oxy := select_number(dyn_rows, 0, oxygen)
+    scrub := select_number(dyn_rows, 0, scrubber)
+    fmt.println(oxy * scrub)
+}
+
+main_ :: proc() {
+    input := string(#load("input.txt"))
+    defer delete(input)
+
+    rows := strings.split(input, "\n")
+    defer delete(rows)
+
+    // task_1(rows)
+    task_2(rows)
 }
 
 main :: proc() {
