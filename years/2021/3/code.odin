@@ -109,7 +109,7 @@ main_ :: proc() {
     rows := strings.split(input, "\n")
     defer delete(rows)
 
-    // task_1(rows)
+    task_1(rows)
     task_2(rows)
 }
 
