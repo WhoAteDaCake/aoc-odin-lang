@@ -10,8 +10,8 @@ import "shared:file"
 import "core:math"
 
 BOARD_SIZE: int : 5
-Board :: distinct [BOARD_SIZE][BOARD_SIZE]int
-BoardCheck :: distinct [BOARD_SIZE][BOARD_SIZE]bool
+Board :: [BOARD_SIZE][BOARD_SIZE]int
+BoardCheck :: [BOARD_SIZE][BOARD_SIZE]bool
 
 numbers :: proc(row: string) -> []int {
     nums_raw := strings.split(row, ",")
@@ -43,15 +43,13 @@ parse_board :: proc(rows: []string, idx: int) -> Board {
     return board
 }
 
-mark_number :: proc(number: int, boards: []Board, check: []BoardCheck) {
-    for board, board_idx in boards {
-        for row, row_i in board {
-            for col, col_i in row {
-                if col == number {
-                    check[board_idx][row_i][col_i] = true
-                }
-            } 
-        }
+mark_number :: proc(number: int, board: Board, board_check: ^BoardCheck) {
+    for row, row_i in board {
+        for col, col_i in row {
+            if col == number {
+                board_check[row_i][col_i] = true
+            }
+        } 
     }
 }
 
@@ -93,11 +91,38 @@ unmarked_score :: proc(board: Board, board_check: BoardCheck) -> int {
 
 task_1 :: proc(nums: []int, boards: []Board, boards_check: []BoardCheck) -> int {
     for number in nums {
-        mark_number(number, boards, boards_check)
+        for board, idx in boards {
+            mark_number(number, board, &boards_check[idx])
+        }
         for board, idx in boards_check {
             if check(board) {
                 total := number * unmarked_score(boards[idx], boards_check[idx])
                 return total
+            }
+        }
+    }
+    return -1
+}
+
+task_2 :: proc(nums: []int, boards: []Board, boards_check: []BoardCheck) -> int {
+    skips := make([]bool, len(boards))
+    skip_c := 0
+    defer delete(skips)
+    
+    for number in nums {
+        for board, idx in boards {
+            if skips[idx] do continue
+            mark_number(number, board, &boards_check[idx])
+        }
+        for board, idx in boards_check {
+            if skips[idx] do continue
+            if check(board) {
+                skip_c += 1
+                skips[idx] = true
+                if skip_c == len(boards) {
+                    total := number * unmarked_score(boards[idx], boards_check[idx])
+                    return total
+                }
             }
         }
     }
@@ -115,7 +140,6 @@ main_ :: proc() {
     defer delete(nums)
 
     board_c := (len(rows) - 1)/ (BOARD_SIZE + 1)
-    // fmt.println(len(rows) - 1, BOARD_SIZE)
     boards := make([]Board, board_c)
     defer delete(boards)
 
@@ -128,8 +152,10 @@ main_ :: proc() {
     boards_check := make([]BoardCheck, board_c)
     defer delete(boards_check)
 
-    result_1 := task_1(nums, boards, boards_check)
-    fmt.println(result_1)
+    result_1 := 0
+    // result_1 := task_1(nums, boards, boards_check)
+    result_2 := task_2(nums, boards, boards_check)
+    fmt.println(result_1, result_2)
 }
 
 main :: proc() {
