@@ -51,7 +51,17 @@ mark_steps :: proc(m: Mark, line_only: bool) -> [dynamic]Step {
             }
         }
     } else if !line_only {
-
+        x := x1
+        y := y1
+        xmul := 1 if x1 < x2 else -1
+        ymul := 1 if y1 < y2 else -1
+        for x != x2 && y != y2 {
+            append(&steps, Step{y, x})
+            x += 1 * xmul
+            y += 1 * ymul
+        }
+        // Append last step since that should be included
+        append(&steps, Step{y, x})
     }
     // Diagonal
     return steps
@@ -64,9 +74,9 @@ read_mark :: proc(row: string) -> Mark {
 }
 
 task :: proc(grid: ^[][]int, marks: []Mark, lines_only: bool) -> int {
-    fmt.println(marks)
     for mark in marks {
         steps := mark_steps(mark, lines_only)
+        // fmt.println(steps)
         defer delete(steps)
         for step in steps {
             grid[step.y][step.x] += 1
@@ -77,13 +87,13 @@ task :: proc(grid: ^[][]int, marks: []Mark, lines_only: bool) -> int {
     for row in grid {
         for cell in row {
             if cell >= 2 do large += 1
-            if cell == 0 {
-                fmt.print(".")
-            } else {
-                fmt.print(cell)
-            }
+            // if cell == 0 {
+            //     fmt.print(".")
+            // } else {
+            //     fmt.print(cell)
+            // }
         }
-        fmt.print("\n")
+        // fmt.print("\n")
     }
     return large
 } 
@@ -123,8 +133,8 @@ main_ :: proc() {
       }
     }  
 
-    result := task(&grid, marks, true)
-    // result := task(&grid, marks, false)
+    // result := task(&grid, marks, true)
+    result := task(&grid, marks, false)
     fmt.println(result)
 }
 
