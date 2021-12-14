@@ -11,20 +11,8 @@ import "shared:utils"
 
 input :: string(#load("input.txt"))
 
-
-main_ :: proc() {
-    nums := utils.numbers(input)
-    defer delete(nums)
-
-    grouped := make(map[int]int)
-    defer delete(grouped)
-
-    for num in nums {
-        grouped[num] += 1
-    }
-
-    lowest := -1
-    // selected := 
+task_1 :: proc(grouped: map[int]int) -> int {
+    lowest := -1 
     for slot, _ in grouped {
         distance := 0
         for o_slot, value in grouped {
@@ -35,8 +23,44 @@ main_ :: proc() {
         }
         lowest = min(lowest, distance)
     } 
+    return lowest
+}
 
-    fmt.println(lowest)
+task_2 :: proc(grouped: map[int]int, end: int) -> int {
+    lowest := -1
+    for slot in 0..end {
+        distance := 0
+        for o_slot, value in grouped {
+            calculated := 0
+            for n in 1..(abs(o_slot - slot)) {
+                calculated += n
+            }
+            distance += calculated * value
+        }
+        if lowest == -1 {
+            lowest = distance
+        }
+        lowest = min(lowest, distance)
+    } 
+    return lowest
+}
+
+main_ :: proc() {
+    nums := utils.numbers(input)
+    defer delete(nums)
+
+    grouped := make(map[int]int)
+    defer delete(grouped)
+
+    end := nums[0]
+    for num in nums {
+        end = max(end, num)
+        grouped[num] += 1
+    }
+
+    // result_1 := task_1(grouped)
+    result_2 := task_2(grouped, end)
+    fmt.println(result_2)
 }
 
 main :: proc() {
