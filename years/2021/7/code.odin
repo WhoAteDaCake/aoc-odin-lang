@@ -16,37 +16,27 @@ main_ :: proc() {
     nums := utils.numbers(input)
     defer delete(nums)
 
-    current := make(map[int]int)
-    defer delete(current)
-    next := make(map[int]int)
-    defer delete(next)
-    
+    grouped := make(map[int]int)
+    defer delete(grouped)
 
     for num in nums {
-        current[num] += 1
+        grouped[num] += 1
     }
 
-    for idx in 0..(256 - 1) {
-        for key, value in current {
-            if key == 0 {
-                next[8] += value
-                next[6] += value
-            } else if key != - 1 {
-                next[key - 1] += value
-            }
+    lowest := -1
+    // selected := 
+    for slot, _ in grouped {
+        distance := 0
+        for o_slot, value in grouped {
+            distance += abs(o_slot - slot) * value
         }
-        clear(&current)
-        for key, value in next {
-            current[key] = value   
+        if lowest == -1 {
+            lowest = distance
         }
-        clear(&next)
-    }
-    sum := 0
-    for key, value in current {
-        sum += value
-        fmt.printf("%d:%d ", key, value)
-    }
-    fmt.printf("\n%d\n", sum)
+        lowest = min(lowest, distance)
+    } 
+
+    fmt.println(lowest)
 }
 
 main :: proc() {
