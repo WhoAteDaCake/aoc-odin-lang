@@ -77,18 +77,12 @@ string_to_bytes :: proc(a: string) -> []byte {
 
 overlap :: proc(a: []byte, b: []byte) -> []byte {
     new_value := make([dynamic]byte)
-    defer delete(new_value)
     for char in a  {
         if slice.contains(b, char) {
             append(&new_value, char)
         }
     }
-    output := make([]byte, len(new_value))
-    for c, idx in new_value {
-        output[idx] = c
-    }
-    // copy(output, new_value[0])
-    return output
+    return new_value[:]
 }
 
 
@@ -107,6 +101,7 @@ decode :: proc(row: Row) -> int {
         // Now we know the layout of the number
         num := UNIQUE_LEN_LOOKUP[len(entry)]
         for indice in INDICES[num] {
+            fmt.println(indice, string(lookup[indice]))
             // Value not set, all values can be here
             if len(lookup[indice]) == 0 {
                 lookup[indice] = bytes
@@ -119,6 +114,7 @@ decode :: proc(row: Row) -> int {
         }
     }
 
+    fmt.println("----------")
     for row, idx in lookup {
         fmt.println(idx, string(row))
     }
@@ -166,7 +162,7 @@ main :: proc() {
     if len(track.allocation_map) > 0 {
         println()
         for _, v in track.allocation_map {
-            printf("%v Leaked %v bytes\n", v.location, v.size)
+            // printf("%v Leaked %v bytes\n", v.location, v.size)
         }
     }
 }
