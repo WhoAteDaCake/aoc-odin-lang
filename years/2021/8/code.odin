@@ -7,27 +7,35 @@ import "core:strconv"
 import "core:mem"
 import "core:path"
 import "core:math"
+import "core:slice"
 import "shared:utils"
 
-input :: string(#load("input.txt"))
+input :: string(#load("input_small.txt"))
 
 Row :: struct {
     inputs: []string,
     outputs: []string,
 }
+INDICE_LEN :: 7
+UNIQUE_LEN_LOOKUP := map[int]int{
+    2 = 1,
+    4 = 4,
+    3 = 7,
+    7 = 9,
+}
 // Which slots need to be filled for a number
-indices :: [
-    [0, 1, 2, 4, 5, 6], //0
-    [2, 5],//1
-    [0, 2, 3, 4, 6],//2
-    [0, 2, 3, 5, 6],//3
-    [1, 2, 3, 5],//4
-    [0, 1, 3, 5, 6],//5
-    [0, 1, 3, 4, 5, 6]//6
-    [0,2, 5]//7
-    [0, 1, 2, 3, 4, 5, 6]//8
-    [0, 1, 2, 3, 5, 6]//9
-]
+INDICES := [][dynamic]int {
+    {0, 1, 2, 4, 5, 6}, //0
+    {2, 5},//1
+    {0, 2, 3, 4, 6},//2
+    {0, 2, 3, 5, 6},//3
+    {1, 2, 3, 5},//4
+    {0, 1, 3, 5, 6},//5
+    {0, 1, 3, 4, 5, 6},//6
+    {0, 2, 5},//7
+    {0, 1, 2, 3, 4, 5, 6},//8
+    {0, 1, 2, 3, 5, 6},//9
+}
 
 parse_row :: proc(row: string) -> Row {
     entries := strings.split(row, " ")
@@ -51,13 +59,79 @@ task_1 :: proc(rows: []Row) -> int {
     acc := 0
     for row in rows {
         for entry in row.outputs {
-            size := len(entry)
-            if size == 2 || size == 4 || size == 3 || size == 7 {
-                acc += 1
+            if len(entry) in UNIQUE_LEN_LOOKUP {
+                acc += 1 
             }
         }
     }
     return acc
+}
+
+string_to_bytes :: proc(a: string) -> []byte {
+    acc := make([]u8, len(a))
+    for _, idx in a {
+        acc[idx] = a[idx]
+    }
+    return acc
+}
+
+overlap :: proc(a: []byte, b: []byte) -> []byte {
+    new_value := make([dynamic]byte)
+    defer delete(new_value)
+    for char in a  {
+        if slice.contains(b, char) {
+            append(&new_value, char)
+        }
+    }
+    output := make([]byte, len(new_value))
+    for c, idx in new_value {
+        output[idx] = c
+    }
+    // copy(output, new_value[0])
+    return output
+}
+
+
+decode :: proc(row: Row) -> int {
+    lookup := make([][]u8, INDICE_LEN)
+    // for _, idx in lookup {
+    //     lookup[idx] = make([]u8)
+    // }
+
+    // Find the unique layouts first 
+    for entry in row.inputs {
+        bytes := string_to_bytes(entry)
+        if !(len(entry) in UNIQUE_LEN_LOOKUP) {
+            continue 
+        }
+        // Now we know the layout of the number
+        num := UNIQUE_LEN_LOOKUP[len(entry)]
+        for indice in INDICES[num] {
+            // Value not set, all values can be here
+            if len(lookup[indice]) == 0 {
+                lookup[indice] = bytes
+                continue
+            }
+            if len(lookup[indice]) == 1 {
+                continue
+            }
+            lookup[indice] = overlap(bytes, lookup[indice])
+        }
+    }
+
+    for row, idx in lookup {
+        fmt.println(idx, string(row))
+    }
+    // fmt.println()
+    return 0
+} 
+
+task_2 :: proc(rows: []Row) -> int {
+    for row in rows {
+        decode(row)
+        break
+    }
+    return 0
 }
 
 main_ :: proc() {
@@ -76,7 +150,8 @@ main_ :: proc() {
         parsed[idx] = parse_row(row)
     }
     result_1 := task_1(parsed)
-    fmt.println(result_1)
+    result_2 := task_2(parsed)
+    // fmt.println(result_1)
 }
 
 main :: proc() {
