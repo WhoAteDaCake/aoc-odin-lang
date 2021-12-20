@@ -8,7 +8,9 @@ import "core:mem"
 import "core:path"
 import "core:math"
 import "core:slice"
+
 import "shared:utils"
+import "shared:sslice"
 
 input :: string(#load("input_small.txt"))
 
@@ -75,97 +77,23 @@ string_to_bytes :: proc(a: string) -> []byte {
     return acc
 }
 
-difference :: proc(a: []byte, b: []byte) -> []byte {
-    new_value := make([dynamic]byte)
-    for char in a  {
-        if !slice.contains(b, char) {
-            append(&new_value, char)
-        }
-    }
-    for char in b  {
-        if !slice.contains(a, char) {
-            append(&new_value, char)
-        }
-    }
-    return new_value[:]
-}
 
-
-overlap :: proc(a: []byte, b: []byte) -> []byte {
-    new_value := make([dynamic]byte)
-    for char in a  {
-        if slice.contains(b, char) {
-            append(&new_value, char)
-        }
-    }
-    return new_value[:]
-}
-
-unique :: proc(a: [][]byte) -> []byte {
-    new_value := make([dynamic]byte)
-    for row in a {
-        for char in row {
-            if !slice.contains(new_value[:], char) {
-                append(&new_value, char)
-            }
-        }
-    }
-    return new_value[:]
-}
-
-reduce_choices :: proc(lookup: ^[][]byte) -> (int, u8) {
-    selected: u8
+reduce_choices :: proc(lookup: [][]byte, checked: []bool) -> (int, int) {
     for choices, idx in lookup {
+        if checked[idx] {
+            continue
+        }
         for s_choices, s_idx in lookup {
-            if idx == s_idx || abs(len(s_choices) - len(choices)) != 1  {
+            if checked[idx] {
                 continue
             }
-            diff := difference(choices, s_choices)
-            if len(diff) != 1 {
-                delete(diff)
-                continue
+
+            if idx != s_idx && len(choices) == 2 && slice.equal(choices, s_choices) {
+                return idx, s_idx
             }
-            
-            delete(lookup[idx])
-            lookup[idx] = diff
-            fmt.println(string(choices), string(s_choices))
-            fmt.println(string(lookup[idx]))
-            fmt.println("---------------")
-            selected := diff[0]
-            return idx, selected
         }
     }
-    return -1, selected
-}
-
-// build_numbers :: proc(lookup: [][]byte) {
-
-//     for ls, idx in INDICES {
-//         number := make([][]u8, len(ls))
-//         for indice, nidx in ls {
-//             number[nidx] = lookup[indice]
-//         }
-//         fmt.printf("%d ", idx)
-//         for num in number {
-//             fmt.printf(" | %s", string(num))
-//         }
-//         fmt.println("")
-//         // selected := unique(number)
-//         // fmt.println(idx, string(selected))
-//     }
-// }
-
-delete_at :: proc(slice: []byte, idx: int) -> []byte {
-    new_slice := make([]byte, len(slice) - 1)
-    offset := 0
-    for item, s_idx in slice {
-        if s_idx == idx {
-            continue
-        } 
-        new_slice[offset] = item
-        offset += 1
-    }
-    return new_slice
+    return -1, -1
 }
 
 decode :: proc(row: Row) -> int {
@@ -196,7 +124,7 @@ decode :: proc(row: Row) -> int {
             if len(lookup[indice]) == 1 {
                 continue
             }
-            lookup[indice] = overlap(bytes, lookup[indice])
+            lookup[indice] = sslice.overlap(bytes, lookup[indice])
         }
     }
 
@@ -205,29 +133,51 @@ decode :: proc(row: Row) -> int {
     }
     fmt.println("----------")
 
-    for {
-        idx, char := reduce_choices(&lookup)
-        if idx == -1 {
+    checked := make([]bool, len(lookup))
+    for { 
+        idx1, idx2 := reduce_choices(lookup, checked)
+        if idx1 == -1 {
             break
         }
-
-        for indice, l_idx in lookup {
-            if l_idx == idx {
+        checked[idx1] = true
+        checked[idx2] = true
+        for entry, idx in lookup {
+            if idx == idx1 || idx == idx2 {
                 continue
             }
-            found_at, found := slice.linear_search(indice, char)
-            if !found {
-                continue
-            }
-            lookup[l_idx] = delete_at(indice, found_at)
-            delete(indice)
+            lookup[idx] = sslice.without(lookup[idx1], entry)
+            delete(entry)
         }
-        for row, idx in lookup {
-            fmt.println(idx, string(row))
-        }
-        fmt.println("----------")
-        break
     }
+
+    for row, idx in lookup {
+        fmt.println(idx, string(row))
+    }
+    fmt.println("----------")
+
+    // for {
+    //     idx, char := reduce_choices(&lookup)
+    //     if idx == -1 {
+    //         break
+    //     }
+
+    //     for indice, l_idx in lookup {
+    //         if l_idx == idx {
+    //             continue
+    //         }
+    //         found_at, found := slice.linear_search(indice, char)
+    //         if !found {
+    //             continue
+    //         }
+    //         lookup[l_idx] = delete_at(indice, found_at)
+    //         delete(indice)
+    //     }
+    //     for row, idx in lookup {
+    //         fmt.println(idx, string(row))
+    //     }
+    //     fmt.println("----------")
+    //     break
+    // }
 
     // for row, idx in lookup {
     //     fmt.println(idx, string(row))
