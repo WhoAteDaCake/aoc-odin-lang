@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+docker run -it \
+  -v $PWD/years:/worker/years \
+  -v $PWD/shared:/worker/shared \
+  -v $PWD/run:/worker/run \
+  --entrypoint bash \
+  --platform linux/amd64 \
+  aoc
