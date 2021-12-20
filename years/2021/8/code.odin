@@ -23,7 +23,7 @@ UNIQUE_LEN_LOOKUP := map[int]int{
     2 = 1,
     4 = 4,
     3 = 7,
-    7 = 9,
+    7 = 8,
 }
 // Which slots need to be filled for a number
 INDICES := [][dynamic]int {
@@ -145,6 +145,13 @@ reduce_duplicates :: proc(lookup: ^[][]byte) {
     }
 }
 
+print_lookup :: proc(lookup: [][]byte) {
+    for row, idx in lookup {
+        fmt.println(idx, string(row))
+    }
+    fmt.println("----------")
+}
+
 decode :: proc(row: Row) -> int {
     lookup := make([][]u8, INDICE_LEN)
     allowed := transmute ([]u8)strings.clone("abcdefg")
@@ -180,25 +187,14 @@ decode :: proc(row: Row) -> int {
 
     fmt.println("-------------")
 
-    for row, idx in lookup {
-        fmt.println(idx, string(row))
-    }
-    fmt.println("----------")
-
+    print_lookup(lookup)
     reduce_duplicates(&lookup)
-
-
-    for row, idx in lookup {
-        fmt.println(idx, string(row))
-    }
-    fmt.println("----------")
+    print_lookup(lookup)
     
     // Confirm algorithm works up to here
     for row, idx in lookup {
         assert(len(row) <= 2)
     }
-
-
     // for row, idx in lookup {
     //     fmt.println(idx, string(row))
     // }
