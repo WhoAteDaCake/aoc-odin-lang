@@ -12,7 +12,7 @@ import "core:slice"
 import "shared:utils"
 import "shared:sslice"
 
-input :: string(#load("input_small.txt"))
+input :: string(#load("input.txt"))
 
 Row :: struct {
     inputs: []string,
@@ -152,8 +152,85 @@ print_lookup :: proc(lookup: [][]byte) {
     fmt.println("----------")
 }
 
+generate_variants :: proc(lookup: ^[][]byte, idx: int, selected: []byte) -> [][]byte {
+    if idx == len(lookup) {
+        result := make([][]byte, 1)
+        result[0] = selected
+        return result
+    }
+    // // Needed?
+    // defer delete(selected)
+    if len(lookup[idx]) == 1 {
+        v1 := make([]byte, len(selected) + 1)
+        copy(v1, selected)
+        v1[len(selected)] = lookup[idx][0]
+        return generate_variants(lookup, idx + 1, v1)
+    }
+
+    v1 := make([]byte, len(selected) + 1)
+    v2 := make([]byte, len(selected) + 1)
+    copy(v1, selected)
+    copy(v2, selected)
+
+    v1[len(selected)] = lookup[idx][0]
+    v2[len(selected)] = lookup[idx][1]
+
+    result_1 := generate_variants(lookup, idx + 1, v1)
+    result_2 := generate_variants(lookup, idx + 1, v2)
+
+    result := make([][]byte, len(result_1) + len(result_2))
+    copy(result, result_1)
+
+    for r, r_idx in result_2 {
+        result[r_idx + len(result_1)] = r
+    }
+    return result
+}
+
+match_word :: proc(word: []byte, layout: []byte) -> int {
+    indices := make([]int, len(word))
+    defer delete(indices)
+    
+    for char, c_idx in word {
+        idx, _ := slice.linear_search(layout, char)
+        if idx == -1 {
+            return -1
+        }
+        // Assume it's always found
+        indices[c_idx] = idx
+    }
+    slice.sort(indices)
+    for order, idx in INDICES {
+        if slice.equal(order[:], indices) {
+            return idx
+        }
+    }
+    return -1
+}
+
+check_variant :: proc(layout: []byte, words: [][]byte) -> bool {
+    found := make([]bool, len(words))
+
+    for word in words {
+        idx := match_word(word, layout)
+        if idx == -1 {
+            return false
+        }
+        found[idx] = true
+    }    
+
+    for f in found {
+        if !f {
+            return false
+        }
+    }
+    return true
+}
+
+
 decode :: proc(row: Row) -> int {
     lookup := make([][]u8, INDICE_LEN)
+    inputs_bytes := make([][]u8, len(INDICES))
     allowed := transmute ([]u8)strings.clone("abcdefg")
     for _, idx in lookup {
         lookup[idx] = make([]u8, len(allowed))
@@ -163,8 +240,9 @@ decode :: proc(row: Row) -> int {
     }
 
     // Find the unique layouts first 
-    for entry in row.inputs {
+    for entry, idx in row.inputs {
         bytes := string_to_bytes(entry)
+        inputs_bytes[idx] = bytes
         if !(len(entry) in UNIQUE_LEN_LOOKUP) {
             continue 
         }
@@ -187,7 +265,7 @@ decode :: proc(row: Row) -> int {
 
     fmt.println("-------------")
 
-    print_lookup(lookup)
+    // print_lookup(lookup)
     reduce_duplicates(&lookup)
     print_lookup(lookup)
     
@@ -195,28 +273,32 @@ decode :: proc(row: Row) -> int {
     for row, idx in lookup {
         assert(len(row) <= 2)
     }
-    // for row, idx in lookup {
-    //     fmt.println(idx, string(row))
-    // }
-    // fmt.println("----------")
-
-    // Print number variations
-
-
-    // for row, idx in lookup {
-    //     fmt.println(idx, string(row))
-    // }
-    // fmt.println("----------")
-
+    
+    // Now we need to go ahead and try creating numbers
+    selected := make([dynamic]byte)
+    variants := generate_variants(&lookup, 0, selected[:])
+    for variant in variants {
+        if check_variant(variant, inputs_bytes) {
+            acc := 0
+            // Now need to check the words
+            for word in row.outputs {
+                bytes := string_to_bytes(word)
+                number := match_word(bytes, variant)
+                acc = acc * 10 + number 
+            }
+            return acc
+        }
+        // fmt.println(string(variant))
+    }
     return 0
 } 
 
 task_2 :: proc(rows: []Row) -> int {
+    acc := 0
     for row in rows {
-        decode(row)
-        break
+        acc += decode(row)
     }
-    return 0
+    return acc
 }
 
 main_ :: proc() {
@@ -234,9 +316,9 @@ main_ :: proc() {
     for row, idx in rows {
         parsed[idx] = parse_row(row)
     }
-    result_1 := task_1(parsed)
+    // result_1 := task_1(parsed)
     result_2 := task_2(parsed)
-    // fmt.println(result_1)
+    fmt.println(result_2)
 }
 
 main :: proc() {
