@@ -78,7 +78,7 @@ string_to_bytes :: proc(a: string) -> []byte {
 }
 
 
-reduce_choices :: proc(lookup: [][]byte, checked: []bool) -> (int, int) {
+reduce_choices :: proc(lookup: ^[][]byte, checked: []bool) -> (int, int) {
     for choices, idx in lookup {
         if checked[idx] {
             continue
@@ -96,44 +96,10 @@ reduce_choices :: proc(lookup: [][]byte, checked: []bool) -> (int, int) {
     return -1, -1
 }
 
-decode :: proc(row: Row) -> int {
-    lookup := make([][]u8, INDICE_LEN)
-    allowed := transmute ([]u8)strings.clone("acedgfb")
-    for _, idx in lookup {
-        lookup[idx] = make([]u8, len(allowed))
-        for c, aix in allowed {
-            lookup[idx][aix] = c
-        }
-    }
-
-    // Find the unique layouts first 
-    for entry in row.inputs {
-        bytes := string_to_bytes(entry)
-        if !(len(entry) in UNIQUE_LEN_LOOKUP) {
-            continue 
-        }
-        // Now we know the layout of the number
-        num := UNIQUE_LEN_LOOKUP[len(entry)]
-        for indice in INDICES[num] {
-            // fmt.println(indice, string(lookup[indice]))
-            // Value not set, all values can be here
-            if len(lookup[indice]) == 0 {
-                lookup[indice] = bytes
-                continue
-            }
-            if len(lookup[indice]) == 1 {
-                continue
-            }
-            lookup[indice] = sslice.overlap(bytes, lookup[indice])
-        }
-    }
-
-    for row, idx in lookup {
-        fmt.println(idx, string(row))
-    }
-    fmt.println("----------")
-
+reduce_duplicates :: proc(lookup: ^[][]byte) {
     checked := make([]bool, len(lookup))
+    defer delete(checked)
+
     for { 
         idx1, idx2 := reduce_choices(lookup, checked)
         if idx1 == -1 {
@@ -145,8 +111,10 @@ decode :: proc(row: Row) -> int {
             if idx == idx1 || idx == idx2 {
                 continue
             }
-            lookup[idx] = sslice.without(lookup[idx1], entry)
-            delete(entry)
+
+            diff := sslice.without(lookup[idx1], entry)
+            delete(lookup[idx])
+            lookup[idx] = diff
         }
     }
 
@@ -169,15 +137,75 @@ decode :: proc(row: Row) -> int {
             if idx == selected {
                 continue
             }
-            lookup[idx] = sslice.without(lookup[selected], entry)
-            delete(entry)
+            diff := sslice.without(lookup[selected], entry)
+            delete(lookup[idx])
+            lookup[idx] = diff
+            // delete(entry)
         }
     }
+}
+
+decode :: proc(row: Row) -> int {
+    lookup := make([][]u8, INDICE_LEN)
+    allowed := transmute ([]u8)strings.clone("abcdefg")
+    for _, idx in lookup {
+        lookup[idx] = make([]u8, len(allowed))
+        for c, aix in allowed {
+            lookup[idx][aix] = c
+        }
+    }
+
+    // Find the unique layouts first 
+    for entry in row.inputs {
+        bytes := string_to_bytes(entry)
+        if !(len(entry) in UNIQUE_LEN_LOOKUP) {
+            continue 
+        }
+        // Now we know the layout of the number
+        num := UNIQUE_LEN_LOOKUP[len(entry)]
+        fmt.println(num, entry)
+        for indice in INDICES[num] {
+            // fmt.println(indice, string(lookup[indice]))
+            // Value not set, all values can be here
+            if len(lookup[indice]) == 0 {
+                lookup[indice] = bytes
+                continue
+            }
+            if len(lookup[indice]) == 1 {
+                continue
+            }
+            lookup[indice] = sslice.overlap(bytes, lookup[indice])
+        }
+    }
+
+    fmt.println("-------------")
 
     for row, idx in lookup {
         fmt.println(idx, string(row))
     }
     fmt.println("----------")
+
+    reduce_duplicates(&lookup)
+
+
+    for row, idx in lookup {
+        fmt.println(idx, string(row))
+    }
+    fmt.println("----------")
+    
+    // Confirm algorithm works up to here
+    for row, idx in lookup {
+        assert(len(row) <= 2)
+    }
+
+
+    // for row, idx in lookup {
+    //     fmt.println(idx, string(row))
+    // }
+    // fmt.println("----------")
+
+    // Print number variations
+
 
     // for row, idx in lookup {
     //     fmt.println(idx, string(row))
