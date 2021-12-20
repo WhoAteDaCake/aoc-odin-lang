@@ -15,3 +15,11 @@ numbers :: proc(row: string) -> []int {
     }
     return nums
 }
+
+string_to_bytes :: proc(a: string) -> []byte {
+    acc := make([]u8, len(a))
+    for _, idx in a {
+        acc[idx] = a[idx]
+    }
+    return acc
+}
