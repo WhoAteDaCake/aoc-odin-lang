@@ -150,34 +150,34 @@ decode :: proc(row: Row) -> int {
         }
     }
 
+    slice.fill(checked, false)
+
+    // Check if any are of len 1
+    for {
+        selected := -1
+        for entries, idx in lookup {
+            if len(entries) == 1 && !checked[idx] {
+                selected = idx
+                break
+            }
+        }
+        if selected == -1 {
+            break
+        }
+        checked[selected] = true
+        for entry, idx in lookup {
+            if idx == selected {
+                continue
+            }
+            lookup[idx] = sslice.without(lookup[selected], entry)
+            delete(entry)
+        }
+    }
+
     for row, idx in lookup {
         fmt.println(idx, string(row))
     }
     fmt.println("----------")
-
-    // for {
-    //     idx, char := reduce_choices(&lookup)
-    //     if idx == -1 {
-    //         break
-    //     }
-
-    //     for indice, l_idx in lookup {
-    //         if l_idx == idx {
-    //             continue
-    //         }
-    //         found_at, found := slice.linear_search(indice, char)
-    //         if !found {
-    //             continue
-    //         }
-    //         lookup[l_idx] = delete_at(indice, found_at)
-    //         delete(indice)
-    //     }
-    //     for row, idx in lookup {
-    //         fmt.println(idx, string(row))
-    //     }
-    //     fmt.println("----------")
-    //     break
-    // }
 
     // for row, idx in lookup {
     //     fmt.println(idx, string(row))
