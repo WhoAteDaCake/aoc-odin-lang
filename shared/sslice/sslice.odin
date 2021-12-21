@@ -61,3 +61,12 @@ delete_at :: proc(slice: []byte, idx: int) -> []byte {
     }
     return new_slice
 }
+
+any_ :: proc(s: $S/[]$U, acc: $T, f: proc(T, U) -> bool, allocator := context.allocator) -> bool {
+	for v in s {
+		if f(acc, v) {
+            return true
+		}
+	}
+	return false
+}
