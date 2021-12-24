@@ -9,6 +9,7 @@ import "core:path"
 import "core:math"
 import "shared:utils"
 import "core:time"
+import "core:slice"
 
 LineState :: enum {
 	Fine,
@@ -24,6 +25,13 @@ SCORE_MAP := map[byte]int{
     ']' = 57,
     '}' = 1197,
     '>' = 25137,
+}
+
+CLOSE_SCORE_MAP := map[byte]int{
+    ')' = 1,
+    ']' = 2,
+    '}' = 3,
+    '>' = 4,
 }
 
 OPEN_PAIRS := map[byte]byte{
@@ -59,11 +67,61 @@ check_symbol :: proc(row: []byte, id: int, closer: byte, nested: int) -> (LineSt
     return .Incomplete, idx
 }
 
+complete_score :: proc(row: []byte, id: int, closer: byte, completion: ^[dynamic]byte) -> (LineState, int) {
+    idx := id
+    for idx <= len(row) - 1 {
+        selected := row[idx]
+        if selected == closer {
+            return .Fine, idx
+        } else if selected in OPEN_PAIRS {
+            status, end_idx := complete_score(row, idx + 1, OPEN_PAIRS[selected], completion)
+            if status != .Fine {
+                if status == .Incomplete {
+                    append(completion, closer)
+                    return .Incomplete, end_idx
+                }
+                return status, end_idx
+            }
+            idx = end_idx + 1
+        } else {
+            return .Corrupted, idx
+        }
+    }
+    append(completion, closer)
+    return .Incomplete, idx
+}
+
+complete_row :: proc(bytes: []byte) -> int {
+    collection := make([dynamic][dynamic]byte)
+    defer {
+        for col in collection do delete(col)   
+        delete(collection)
+    }
+    for i := 0; i < len(bytes) - 1; i += 1 {
+        completion := make([dynamic]byte)
+        _, idx := complete_score(bytes, i + 1, OPEN_PAIRS[bytes[i]], &completion)
+        i = idx
+        append(&collection, completion)
+    }
+    score := 0
+    for col in collection {
+        for c in col {
+            score *= 5
+            score += CLOSE_SCORE_MAP[c]
+        }
+        // fmt.println(string(col[:]), score)
+    }
+    return score
+}
+
 main_ :: proc() {
     rows := strings.split(input, "\n")
     defer delete(rows)
 
-    score := 0
+    score_1 := 0
+    score_2 := make([dynamic]int)
+    defer delete(score_2)
+
     for row in rows {
         bytes := utils.string_to_bytes(row)
         defer delete(bytes)
@@ -74,14 +132,20 @@ main_ :: proc() {
                 continue 
             }
             if status == .Corrupted {
-                // fmt.printf("%s, %s ", status, row)
-                score += SCORE_MAP[row[i]]
-                // fmt.println(rune(row[i]))
+                score_1 += SCORE_MAP[row[i]]
+            } else {
+                completion := make([dynamic]byte)
+                defer delete(completion)
+                append(&score_2, complete_row(bytes))
             }
             break
         }
     }
-    fmt.println(score)
+    slice.sort(score_2[:])
+    score_2_idx := len(score_2) / 2
+
+    fmt.println(score_1)
+    fmt.println(score_2[score_2_idx])
 }
 
 main :: proc() {
