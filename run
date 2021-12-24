@@ -3,4 +3,4 @@ set -e
 
 odin build years/2021/$1/code.odin -debug -collection:shared=shared
 
-# ./code
+./code
