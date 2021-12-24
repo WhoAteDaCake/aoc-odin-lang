@@ -84,10 +84,42 @@ task_1 :: proc(grid: ^[][]int) {
     fmt.println(flashes)
 }
 
+
+task_2 :: proc(grid: ^[][]int) {
+    marked := utils.allocate_grid(len(grid), len(grid[0]), false)
+    defer utils.delete_grid(marked)
+
+    step := 1
+    for {
+        fmt.println(step)
+        for row, y in grid {
+            for _, x in row {
+                perform_step(grid, y, x, &marked)
+            }
+        }
+        check := true
+        for row in marked {
+            for val in row {
+                check = check && val
+            }
+        }
+
+        utils.print_number_grid(grid^)
+        utils.reset_grid(marked)
+        if check {
+            break
+        }
+        step += 1
+    } 
+    fmt.println(step)
+}
+
+
 main_ :: proc() {
     grid := utils.number_grid(input)
     defer utils.delete_grid(grid)
-    task_1(&grid)
+    // task_1(&grid)
+    task_2(&grid)
 }
 
 main :: proc() {
